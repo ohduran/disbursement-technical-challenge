@@ -5,7 +5,7 @@ class DisbursementsJob < ApplicationJob
   def perform(*_args)
     disbursements_data = []
 
-    Order.completed_last_week.without_disbursement.find_each do |order|
+    Order.completed_last_week.not_disbursed.find_each do |order|
       amount = calculate_disbursement(order.amount)
       disbursements_data << { order_id: order.id, amount: amount }
     end
@@ -20,7 +20,7 @@ class DisbursementsJob < ApplicationJob
       amount * 0.01
     elsif amount.between?(50, 300)
       amount * 0.0095
-    else
+    elsif amount > 300
       amount * 0.0085
     end
   end

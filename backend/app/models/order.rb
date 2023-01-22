@@ -12,7 +12,7 @@ class Order < ApplicationRecord
     where(completed_at: (Time.current.beginning_of_week - 1.week)...Time.current.beginning_of_week)
   }
 
-  scope :without_disbursement, lambda {
+  scope :not_disbursed, lambda {
     where.not(id: Disbursement.select(:order_id))
   }
 end
