@@ -18,7 +18,7 @@ RSpec.describe DisbursementsJob, type: :job do
 
       # Orders outside scope: they have disbursements, completed not last week, or not completed
       @out_of_scope_orders = []
-      @out_of_scope_orders.concat(create_list(:order, 5, :completed_last_week, :with_disbursement, merchant: merchant))
+      @out_of_scope_orders.concat(create_list(:order, 5, :with_disbursement, :completed_last_week, merchant: merchant))
       @out_of_scope_orders.concat(create_list(:order, 5, completed_at: Time.now, merchant: merchant))
       @out_of_scope_orders.concat(create_list(:order, 5, completed_at: nil, merchant: merchant))
     end

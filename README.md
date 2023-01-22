@@ -38,7 +38,7 @@ On top of that, the nebulous concepts of `disbursed_at` and `disbursed_amount` s
 
 When I was developing `DisbursementJob`, the idea that each `Order` could be `disbursed` was explored, but finally discarded for the following reasons:
 
-1) The verb `disburse` is used with the client as the agent, and the Merchant as the subject. The language used in the requirements does not express orders as being subject to a disbursement.
+1) The verb `disburse` is used with the client as the agent, and the Merchant as the subject. The language used in the requirements does not express orders as being subject to a disbursement (In the tests, the `order` factory has a trait `with_disbursement`, but not *disbursed*).
 
 2) In terms of performance, it is better to create `Disbursement`s in bulk rather than creating them one by one inside a loop.
 
