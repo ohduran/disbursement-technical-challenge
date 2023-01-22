@@ -98,7 +98,17 @@ RSpec.describe DisbursementsController, type: :request do
         end
       end
 
-      context 'and are not valid' do
+      context 'and start time is after end time' do
+        let(:start_time) { Time.current.end_of_week }
+        let(:end_time) { Time.current.beginning_of_week }
+
+        it 'should return a bad request response' do
+          get(url)
+          expect(response).to have_http_status(:bad_request)
+        end
+      end
+
+      context 'and are not datetimes' do
         let(:start_time) { 'Test' }
         let(:end_time) { 'Test' }
 

@@ -25,8 +25,7 @@ The proposed solution is a minimal [Rails application](https://rubyonrails.org/)
 
 Based on the information provided, I defined the application using four models: `Merchant`, `Order`, `Shopper` and `Disbursement`. Each `Merchant` and each `Shopper` may have multiple `Order`s associated with it, and each `Order` may or may not have a `Disbursement`. A completed Order will include the date of completion in the `completed_at` column, and each Monday at midnight, the `DisbursementJob` will collect all completed Orders and create a `Disbursement` for it.
 
-Special methods and scopes have been included to facilitate the usage of these models in other parts of the code. An `Order` can be `completed_last_week` and `not_disbursed`, both essential conditions for the `DisbursementJob` to create a `Disbursement` for an `Order`. A `Merchant`'s `total_disbursement_amount` is calculated as the sum of the `Disbursement`'s `amount` for `Order`s that were `completed_at` a time within a given timeframe.
-
+Special methods and scopes have been included to facilitate the usage of these models in other parts of the code. An `Order` can be `completed_last_week` and `not_disbursed`, both essential conditions for the `DisbursementJob` to create a `Disbursement` for an `Order`.
 
 ### Why create a Disbursement model rather than creating a new column in Order?
 
@@ -46,6 +45,17 @@ When I was developing `DisbursementJob`, the idea that each `Order` could be `di
 
 Given that no special considerations were given in the requirements as to what to do in terms of rounding disbursement amounts, normal rounding (i.e., 0.004 rounds to 0.01) applies. Two digit precision was also assumed for the amounts of money involved.
 
+## Endpoint logic
+
+An endpoint was created to GET all disbursements for a given merchant or all merchants. The ambiguity in the requirements with regards to dates led me to include two optimal parameters `start_time` and `end_time`. If none of these were present, the request defaults to last week; an error would be raised if only one is present, or if start_time is after end_time. This way, the spirit of "a given week" is preserved.
+
 ## Testing
 
-Given the preference for pushing business logic inside the models, testing was primarily focused at the model layer.
+The requirements implied two areas where tests should match the expected behaviour of the system:
+
+* A cron job that run weekly which should create disbursements for orders completed the week earlier.
+* An API endpoint that returns the available disbursements for a given merchant on a given week.
+
+The former can be found on [the disbursement job spec](backend/spec/jobs/disbursements_job_spec.rb) and the latter on [GET /disbursements spec](backend/spec/jobs/disbursements_job_spec.rb).
+
+An extra test suite was added in order to verify the behaviour of `Order#completed_last_week` and increase the confidence that the method used on the disbursement cron job handled the dates correctly. This was needed to make sure that, in the event of the cron job failing for some unexpected reason, rerunning the task would apply under the correct circumstances, removing the dependency of having to run the job at Monday midnight. As a consequence, the reliability of the system is increased.

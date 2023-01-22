@@ -13,6 +13,8 @@ class DisbursementsController < ApplicationController
       start_time = DateTime.parse(params[:start_time])
       end_time = DateTime.parse(params[:end_time])
     end
+    raise StandardError, 'start_time must be before end_time' unless start_time < end_time
+
     @disbursements = @disbursements.where(order: { completed_at: start_time...end_time })
 
     merchant = Merchant.find_by!(id: params[:merchant_id]) if params[:merchant_id]
