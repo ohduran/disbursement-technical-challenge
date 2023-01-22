@@ -54,3 +54,6 @@ pickle-email-*.html
 */storage/*
 !*/storage/.keep
 */public/uploads
+
+# Ignore seed data
+backend/db/fixtures/*
