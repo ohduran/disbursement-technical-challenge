@@ -1,6 +1,6 @@
 class DisbursementsController < ApplicationController
   def index
-    @disbursements = Disbursement.joins(:order)
+    @disbursements = Disbursement.includes([:order])
 
     # start_time and end_time must be both present.
     # if none are present, set the defaults to be last week.

@@ -17,23 +17,43 @@ This technical challenge covered the following requirements:
 * Calculate and persist the disbursements per merchant on a given week. As the calculations can take some time it should be isolated and be able to run independently of a regular web request, for instance by running a background job.
 * Create an API endpoint to expose the disbursements for a given merchant on a given week. If no merchant is provided return for all of them.
 
+## How to Bring the server up
+
+Make sure that you have [Docker](https://www.docker.com/) installed on your computer.
+
+First, open a terminal, change directory to this project root folder and run `docker-compose build` in order to build the images.
+
+Then, copy the seed data from the dataset into `backend/db/fixtures/<merchants|orders|shoppers>.json`.
+
+After that, we need to set up the database, run the migrations and preload some seed data that mimics the example baskets in the specification. For that, run the following command:
+
+```sh
+docker-compose run --rm backend bash -c "RAILS_ENV=development rails db:migrate && rails db:seed"
+```
+
+Finally, bring the server up with `docker-compose up`. You can interact with the endpoints from any API GUI such as [Postman](https://www.postman.com/).
+
+Notice that by calling http://localhost:3000/disbursements, you'll find the disbursements in seed for orders completed last week. Given that the DisbursementJob has not been run yet, no data is available. Feel free to temporary remove `.completed_last_week` on backend/app/jobs/disbursements_job.rb, line 8 in order to create Disbursements for all completed orders in the database.
+
+In doing so, using time filters such as http://localhost:3000/disbursements?start_time=2018-01-01&end_time=2018-01-08 will yield a non-empty result.
+
 # Overview of the Solution
 
 The proposed solution is a minimal [Rails application](https://rubyonrails.org/) built for backend (API endpoints rather than server-side rendering).
 
-## Data model
+### Data model
 
 Based on the information provided, I defined the application using four models: `Merchant`, `Order`, `Shopper` and `Disbursement`. Each `Merchant` and each `Shopper` may have multiple `Order`s associated with it, and each `Order` may or may not have a `Disbursement`. A completed Order will include the date of completion in the `completed_at` column, and each Monday at midnight, the `DisbursementJob` will collect all completed Orders and create a `Disbursement` for it.
 
 Special methods and scopes have been included to facilitate the usage of these models in other parts of the code. An `Order` can be `completed_last_week` and `not_disbursed`, both essential conditions for the `DisbursementJob` to create a `Disbursement` for an `Order`.
 
-### Why create a Disbursement model rather than creating a new column in Order?
+#### Why create a Disbursement model rather than creating a new column in Order?
 
 The concept of disbursement appears to be separate from an order. In terms of the lifecycle of an order, it appears to be created first, then completed, and finally disbursed. This Disbursement is then an interaction exclusively between the Merchant and the client, and by creating a conceptual separation between the Order and the Disbursement, the system may be extended so that disbursements be paid separately, with a different timeline and perhaps with an option for discounts and special scenarios.
 
 On top of that, the nebulous concepts of `disbursed_at` and `disbursed_amount` still exist for each order, given the one-to-one relationhip between these two models, and we can check for the Order having been disbursed by simply ensuring that there is a Disbursement associated with it (which connects seamlessly with the [Ubiquitous Language](https://www.martinfowler.com/bliki/UbiquitousLanguage.html) of the domain.
 
-### Why not create an Order#disburse! method?
+#### Why not create an Order#disburse! method?
 
 When I was developing `DisbursementJob`, the idea that each `Order` could be `disbursed` was explored, but finally discarded for the following reasons:
 
@@ -41,15 +61,15 @@ When I was developing `DisbursementJob`, the idea that each `Order` could be `di
 
 2) In terms of performance, it is better to create `Disbursement`s in bulk rather than creating them one by one inside a loop.
 
-### Amount rounding
+#### Amount rounding
 
 Given that no special considerations were given in the requirements as to what to do in terms of rounding disbursement amounts, normal rounding (i.e., 0.004 rounds to 0.01) applies. Two digit precision was also assumed for the amounts of money involved.
 
-## Endpoint logic
+### Endpoint logic
 
 An endpoint was created to GET all disbursements for a given merchant or all merchants. The ambiguity in the requirements with regards to dates led me to include two optimal parameters `start_time` and `end_time`. If none of these were present, the request defaults to last week; an error would be raised if only one is present, or if start_time is after end_time. This way, the spirit of "a given week" is preserved.
 
-## Testing
+### Testing
 
 The requirements implied two areas where tests should match the expected behaviour of the system:
 
