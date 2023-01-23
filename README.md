@@ -1,4 +1,4 @@
-# Merchant Disbursement Technical Challenge
+# Merchant Disbursement Technical Challenge
 
 The client provides ecommerce shops (merchants) a flexible payment method so their customers (shoppers) can purchase and receive goods without paying upfront. The client earns a small fee per purchase and pays out (disburse) the merchant once the order is marked as completed.
 
